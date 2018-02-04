@@ -3,7 +3,7 @@ import numpy as np
 from IPython.display import display, HTML
 from dateutil.parser import parse
 from datetime import datetime as dt
-# import seaborn as sns
+import seaborn as sns
 
 def megadescribe(df):
     """Quickly see many statistics and pivots of your data"""
@@ -201,11 +201,11 @@ def megadescribe(df):
         else:
             print(todispformatted)
         droppnulls = df[colclass.numerics()].dropna()
-        # if this_is_a_notebook():
-        #     if len(droppnulls.columns) < 11:
-        #         sns.pairplot(droppnulls)
-        #     else:
-        #         print('Pairplot will not be displayed as there were {} continuous variables'.format(len(droppnulls.columns)))
+        if this_is_a_notebook():
+            if len(droppnulls.columns) < 11:
+                sns.pairplot(droppnulls)
+            else:
+                print('Pairplot will not be displayed as there were {} continuous variables'.format(len(droppnulls.columns)))
 
     # Time to look at unusual rows
     
