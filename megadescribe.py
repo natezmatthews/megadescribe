@@ -10,8 +10,10 @@ def megadescribe(df):
     class ColumnClassifier():
         """The rest of megadescribe will need good guesses about what's in each column of the dataframe"""
         def __init__(self,df):
-            assert type(df) == pd.core.frame.DataFrame, "Argument was not a pandas DataFrame"
-            assert len(df.columns) > 0, "There are no columns"
+            if not isinstance(df,pd.DataFrame):
+                return TypeError("Argument was not a pandas DataFrame")
+
+            self._num_columns = len(df.columns)
             
             dates = ['<M8', 'datetime64']
             numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
@@ -31,6 +33,9 @@ def megadescribe(df):
                     self.__idsuffix += [c]
                 if c[-2:].lower() == 'yn':
                     self.__ynsuffix += [c]
+
+        def __len__():
+            return self._num_columns
         
         def __isdate__(self,string):
             try: 
