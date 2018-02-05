@@ -5,7 +5,8 @@ from dateutil.parser import parse
 from datetime import datetime as dt
 
 class ColumnClassifier():
-    """The rest of megadescribe will need good guesses about what's in each column of the dataframe"""
+    """Classify the columns into dates, categorical variables, 
+       and continuous variables, using reasonable guesses"""
     def __init__(self,df):
         if not isinstance(df,pd.DataFrame):
             raise TypeError("Argument was not a pandas DataFrame")
@@ -46,7 +47,9 @@ class ColumnClassifier():
         except: # We'll be conservative here, this is a quick description tool
             return False
 
-    def __cmb__(self,include=[],exclude=[]):
+    def __combine(self,include=[],exclude=[]):
+        """Combine and remove duplicates from the 'include' items, 
+           and remove the 'exclude' items."""
         exclude = set(exclude)
         toret = []
         for c in include:
@@ -56,19 +59,21 @@ class ColumnClassifier():
         return toret
 
     def dates(self):
-        return self.__cmb__(include = self.__datevals) # Using __cmb__ for its deduping, and for consistency
+        return self.__combine(include = self.__datevals)
         
     def categoricals(self):
-        return self.__cmb__(include = self.__ynsuffix + self.__objects,
+        return self.__combine(include = self.__ynsuffix + self.__objects,
                             exclude = self.__datevals)
     def numerics(self):
-        return self.__cmb__(include = self.__numvals,
-                            exclude = self.__idsuffix + self.categoricals() + self.__allnulls)
+        return self.__combine(include = self.__numvals,
+                            exclude = self.__idsuffix + self.categoricals() +\
+                                      self.__allnulls)
 
 class UnusualRowScore():
-    """Give each row a score that sums up how 'unusual' its values are, where a value is
-       considered unusual for a column of continuous variables when it has a high percentile,
-       and is considered unusual for a column of categorical variables when it is rare."""
+    """Give each row a score that sums up how 'unusual' its values are, where
+       a value is considered unusual for a column of continuous variables when
+       it has a high percentile, and is considered unusual for a column of 
+       categorical variables when it is rare."""
     def __init__(self,df,colclass):
         self.df = df
         self.scores = pd.DataFrame(index=df.index)
@@ -121,7 +126,8 @@ class UnusualRowScore():
 
     def show(self,n=5):
         # Sort descending by the sum of the scores 
-        to_display = self.df.loc[self.scores.sum(axis=1).sort_values(ascending=False).index]
+        sort_index = self.scores.sum(axis=1).sort_values(ascending=False).index
+        to_display = self.df.loc[sort_index]
         if this_is_a_notebook():
             display(to_display.head(n))
         else:
@@ -154,6 +160,7 @@ def header(text):
 def megadescribe(df,n=5):
     """Quickly see many statistics and pivots of your data"""
     colclass = ColumnClassifier(df)
+    strf = lambda x: "{0:.4f} %".format(x * 100)
     
     # Time to look at categorical variables
     
@@ -167,7 +174,7 @@ def megadescribe(df,n=5):
             nmnull = df[col].isnull().sum()
             todisp = pd.value_counts(df[col].values).iloc[:5] / collen
             if not todisp.empty:
-                todispdf = pd.DataFrame(todisp.rename(str(col)).map(lambda x: "{0:.4f} %".format(x * 100)))
+                todispdf = pd.DataFrame(todisp.rename(str(col)).map(strf))
                 if this_is_a_notebook():
                     display(todispdf)
                 else:
