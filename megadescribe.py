@@ -11,13 +11,18 @@ def megadescribe(df):
         """The rest of megadescribe will need good guesses about what's in each column of the dataframe"""
         def __init__(self,df):
             if not isinstance(df,pd.DataFrame):
-                return TypeError("Argument was not a pandas DataFrame")
+                raise TypeError("Argument was not a pandas DataFrame")
 
             self._num_columns = len(df.columns)
             
             dates = ['<M8', 'datetime64']
             numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-            
+            def last_two_letters_lower(text):
+                if not isinstance(text,str):
+                    return None
+                chars_to_return = min(2,len(text))
+                return c[-chars_to_return:].lower()
+
             self.__objects = [c for c in df.select_dtypes(include=['object']).columns]
             self.__datevals = [c for c in df.select_dtypes(include=dates).columns]
             self.__numvals = [c for c in df.select_dtypes(include=numerics).columns]
@@ -29,9 +34,9 @@ def megadescribe(df):
                     self.__allnulls += [c]
                 if df[c].map(self.__isdate__).all():
                     self.__datevals += [c]
-                if c[-2:].lower() == 'id':
+                if last_two_letters_lower(c) == 'id':
                     self.__idsuffix += [c]
-                if c[-2:].lower() == 'yn':
+                if last_two_letters_lower(c) == 'yn':
                     self.__ynsuffix += [c]
 
         def __len__():
@@ -143,7 +148,8 @@ def megadescribe(df):
         return ('{:,' + toinsert + '}').format(x)
 
     def header(text):
-        assert isinstance(text, str), "Header must be a string"
+        if not isinstance(text, str):
+            raise TypeError("Header must be a string")
         textlen = len(text)
         bounds = "+{}+".format((textlen + 2) * "-") 
         textline = "\n+ {} +\n".format(text)
