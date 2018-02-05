@@ -74,11 +74,11 @@ class UnusualRowScore():
         self.scores = pd.DataFrame(index=df.index)
 
         for col in colclass.dates():
-                self.date_score(col)
+            self.date_score(col)
         for col in colclass.numerics():
-                self.numeric_score(col)
+            self.numeric_score(col)
         for col in colclass.categoricals():
-                self.categorical_score(col)
+            self.categorical_score(col)
 
     def categorical_score(self,col):
         # Find the % of the data in each category
