@@ -5,7 +5,7 @@ from dateutil.parser import parse
 from datetime import datetime as dt
 # import seaborn as sns
 
-def megadescribe(df):
+def megadescribe(df,n=5):
     """Quickly see many statistics and pivots of your data"""
     class ColumnClassifier():
         """The rest of megadescribe will need good guesses about what's in each column of the dataframe"""
@@ -122,14 +122,13 @@ def megadescribe(df):
             seconds = self.df[col].map(self.__dtseconds__)
             self.contDeviScore(seconds,col)
 
-        def show(self):
-            scoresums = self.scores.sum(axis=1).rename("scoresums_onlyawombatwouldnameacolumnthis") # Random in the kid sense https://xkcd.com/1210/
-            todisp = self.df.join(scoresums)
-            todisp = todisp.sort_values(by='scoresums_onlyawombatwouldnameacolumnthis',ascending=False).drop('scoresums_onlyawombatwouldnameacolumnthis',axis=1)
+        def show(self,n=5):
+            # Sort descending by the sum of the scores 
+            to_display = self.df.loc[self.scores.sum(axis=1).sort_values(ascending=False).index]
             if this_is_a_notebook():
-                display(todisp.head())
+                display(to_display.head(n))
             else:
-                print(todisp.head())
+                print(to_display.head(n))
 
     def this_is_a_notebook():
         try:
@@ -219,4 +218,4 @@ def megadescribe(df):
     if not df.empty:
         header("Rows with high percentile values and/or rare categories")
         unusualrows = UnusualRowScore(df,colclass)
-        unusualrows.show()
+        unusualrows.show(n)
