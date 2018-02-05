@@ -159,67 +159,64 @@ def megadescribe(df):
     
     # Time to look at categorical variables
     
-    header("Categorical Variables")
-    nullcols = []
-    for col in colclass.categoricals():
-        collen = len(df[col])
-        nmnull = df[col].isnull().sum()
-        todisp = pd.value_counts(df[col].values).iloc[:5] / collen
-        if not todisp.empty:
-            todispdf = pd.DataFrame(todisp.rename(str(col)).map(lambda x: "{0:.4f} %".format(x * 100)))
-            if this_is_a_notebook():
-                display(todispdf)
+    if not colclass.categoricals():
+        print("No categorical variables.")
+    else:
+        header("Categorical Variables")
+        nullcols = []
+        for col in colclass.categoricals():
+            collen = len(df[col])
+            nmnull = df[col].isnull().sum()
+            todisp = pd.value_counts(df[col].values).iloc[:5] / collen
+            if not todisp.empty:
+                todispdf = pd.DataFrame(todisp.rename(str(col)).map(lambda x: "{0:.4f} %".format(x * 100)))
+                if this_is_a_notebook():
+                    display(todispdf)
+                else:
+                    print(todispdf)
+                print('Top {:d} represent {:.1%} of rows.'.format(5,todisp.sum()))
+                if nmnull > 0:
+                    print('{:.1%} of rows are null\n\n'.format(nmnull/collen))
+                else:
+                    print('No rows are null\n\n')
             else:
-                print(todispdf)
-            print('Top {:d} represent {:.1%} of rows.'.format(5,todisp.sum()))
-            if nmnull > 0:
-                print('{:.1%} of rows are null\n\n'.format(nmnull/collen))
-            else:
-                print('No rows are null\n\n')
-        else:
-            nullcols = nullcols + [str(col)]
-    if nullcols:
-        print('The following categorical columns are entirely null:\n')
-        for col in nullcols:
-            print(col)
+                nullcols = nullcols + [str(col)]
+        if nullcols:
+            print('The following categorical columns are entirely null:\n')
+            for col in nullcols:
+                print(col)
 
     # Time to look at continuous variables
-    
-    desc = pd.DataFrame()
-    for col in colclass.numerics():
-        s = df[col]
-        d = {}
-        d['count'] = s.count()
-        d['sum'] = s.sum()
-        d['mean'] = s.mean()
-        numnull = s.isnull().sum() 
-        d['%null'] = float(numnull) / len(s)
-        d['min'] = s.min()
-        d['10%'] = s.dropna().quantile(0.1)
-        d['50%'] = s.dropna().quantile(0.5)
-        d['90%'] = s.dropna().quantile(0.9)
-        d['max'] = s.max()
-        desc[col] = pd.Series(d)
-
-    if desc.empty:
-        print('No continuous variables')
+    if not colclass.numerics():
+        print("No continous variables.")
     else:
+        header("Continuous Variables")
+        desc = pd.DataFrame()
+        for col in colclass.numerics():
+            s = df[col]
+            d = {}
+            d['count'] = s.count()
+            d['sum'] = s.sum()
+            d['mean'] = s.mean()
+            numnull = s.isnull().sum() 
+            d['%null'] = float(numnull) / len(s)
+            d['min'] = s.min()
+            d['10%'] = s.dropna().quantile(0.1)
+            d['50%'] = s.dropna().quantile(0.5)
+            d['90%'] = s.dropna().quantile(0.9)
+            d['max'] = s.max()
+            desc[col] = pd.Series(d)
+
         colorder = ['count','sum','mean','%null','min','10%','50%','90%','max']
         todispformatted = desc.applymap(readable_numbers).T[colorder].style.applymap(lambda x: 'text-align:right')
-        header("Continuous Variables")
         if this_is_a_notebook():
             display(todispformatted)
         else:
             print(todispformatted)
         droppnulls = df[colclass.numerics()].dropna()
-        # if this_is_a_notebook():
-        #     if len(droppnulls.columns) < 11:
-        #         sns.pairplot(droppnulls)
-        #     else:
-        #         print('Pairplot will not be displayed as there were {} continuous variables'.format(len(droppnulls.columns)))
 
     # Time to look at unusual rows
-    
-    header("Rows with high percentile values and/or rare categories")
-    unusualrows = UnusualRowScore(df,colclass)
-    unusualrows.show()
+    if not df.empty:
+        header("Rows with high percentile values and/or rare categories")
+        unusualrows = UnusualRowScore(df,colclass)
+        unusualrows.show()
