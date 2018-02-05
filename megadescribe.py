@@ -77,13 +77,13 @@ def megadescribe(df,n=5):
             self.scores = pd.DataFrame(index=df.index)
 
             for col in colclass.dates():
-                    self.dateDeviScore(col)
+                    self.date_score(col)
             for col in colclass.numerics():
-                    self.numDeviScore(col)
+                    self.numeric_score(col)
             for col in colclass.categoricals():
-                    self.catDeviScore(col)
+                    self.categorical_score(col)
 
-        def catDeviScore(self,col):
+        def categorical_score(self,col):
             # Find the % of the data in each category
             self.scores[col] = self.df[col].values
             dist = pd.value_counts(self.df[col].values,normalize=True)
@@ -91,7 +91,7 @@ def megadescribe(df,n=5):
                 return
             # We will give categories with the highest frequency a score of 0, and
             # the categories with the lowest frequency a score of 1
-            seen = set() # For deduping in order with this comprehension here:
+            seen = set() # For deduping in order, using this comprehension here:
             dist2 = [x for x in dist.values if not (x in seen or seen.add(x))]
             dist3 = [dist2[0] / x if x != 0 else 0 for x in dist2]
             dist4 = [x - 1 for x in dist3]
@@ -102,12 +102,12 @@ def megadescribe(df,n=5):
             mapdict = mapser[['index_x','index_y']].set_index('index_x').to_dict()['index_y']
             self.scores[col] = self.scores[col].map(mapdict)
             
-        def contDeviScore(self,theseries,col):
+        def cont_score(self,theseries,col):
             percen = theseries.rank(pct=True)
             self.scores[col] = percen.map(lambda x: 2 * abs(0.5 - x))
         
-        def numDeviScore(self,col):
-            self.contDeviScore(self.df[col],col)
+        def numeric_score(self,col):
+            self.cont_score(self.df[col],col)
         
         def __dtseconds__(self,x):
             if not x:
@@ -118,9 +118,9 @@ def megadescribe(df,n=5):
             except:
                 return None
 
-        def dateDeviScore(self,col):
+        def date_score(self,col):
             seconds = self.df[col].map(self.__dtseconds__)
-            self.contDeviScore(seconds,col)
+            self.cont_score(seconds,col)
 
         def show(self,n=5):
             # Sort descending by the sum of the scores 
