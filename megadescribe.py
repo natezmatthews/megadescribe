@@ -16,6 +16,9 @@ class ColumnClassifier():
         dates = ['<M8', 'datetime64']
         numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
         def last_two_letters_lower(text):
+            # We expect to run into some column names that are not strings, and
+            # in that circumstance, rather than error out, the desired behavior
+            # is to return None:
             if not isinstance(text,str):
                 return None
             chars_to_return = min(2,len(text))
@@ -44,7 +47,7 @@ class ColumnClassifier():
         try: 
             parse(string)
             return True
-        except: # We'll be conservative here, this is a quick description tool
+        except:
             return False
 
     def __combine(self,include=[],exclude=[]):
@@ -115,7 +118,8 @@ class UnusualRowScore():
         if not x:
             return None
         try:
-            xdt = parse(x)
+            if isinstance(x,str):
+                x = parse(x)
             return (x - dt.fromtimestamp(0)).total_seconds()
         except:
             return None
@@ -213,11 +217,12 @@ def megadescribe(df,n=5):
             desc[col] = pd.Series(d)
 
         colorder = ['count','sum','mean','%null','min','10%','50%','90%','max']
-        todispformatted = desc.applymap(readable_numbers).T[colorder].style.applymap(lambda x: 'text-align:right')
+        todisp = desc.applymap(readable_numbers).T[colorder]
+        todisp = todisp.style.applymap(lambda x: 'text-align:right')
         if this_is_a_notebook():
-            display(todispformatted)
+            display(todisp)
         else:
-            print(todispformatted)
+            print(todisp)
         droppnulls = df[colclass.numerics()].dropna()
 
     # Time to look at unusual rows
