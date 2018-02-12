@@ -33,7 +33,7 @@ class ColumnClassifier():
         for c in df.columns:
             if df[c].isnull().all():
                 self.__allnulls += [c]
-            if df[c].map(self.__isdate__).all():
+            if df[c].map(self.__isdate).all():
                 self.__datevals += [c]
             if last_two_letters_lower(c) == 'id':
                 self.__idsuffix += [c]
@@ -43,7 +43,7 @@ class ColumnClassifier():
     def __len__():
         return self._num_columns
     
-    def __isdate__(self,string):
+    def __isdate(self,string):
         try: 
             parse(string)
             return True
@@ -72,7 +72,7 @@ class ColumnClassifier():
                             exclude = self.__idsuffix + self.categoricals() +\
                                       self.__allnulls)
 
-class UnusualRowScore():
+class UnusualRowScoring():
     """Give each row a score that sums up how 'unusual' its values are, where
        a value is considered unusual for a column of continuous variables when
        it has a high percentile, and is considered unusual for a column of 
@@ -82,15 +82,14 @@ class UnusualRowScore():
         self.scores = pd.DataFrame(index=df.index)
 
         for col in colclass.dates():
-            self.date_score(col)
+            self.scores[col] = self.date_score(col)
         for col in colclass.numerics():
-            self.numeric_score(col)
+            self.scores[col] = self.numeric_score(col)
         for col in colclass.categoricals():
-            self.categorical_score(col)
+            self.scores[col] = self.categorical_score(col)
 
     def categorical_score(self,col):
         # Find the % of the data in each category
-        self.scores[col] = self.df[col].values
         dist = pd.value_counts(self.df[col].values,normalize=True)
         if dist.empty:
             return
@@ -105,16 +104,16 @@ class UnusualRowScore():
         # Mapping series
         mapser = pd.merge(pd.DataFrame(dist).reset_index(),dist6,on=0)
         mapdict = mapser[['index_x','index_y']].set_index('index_x').to_dict()['index_y']
-        self.scores[col] = self.scores[col].map(mapdict)
+        return self.df[col].map(mapdict)
         
     def cont_score(self,theseries,col):
         percen = theseries.rank(pct=True)
-        self.scores[col] = percen.map(lambda x: 2 * abs(0.5 - x))
+        return percen.map(lambda x: 2 * abs(0.5 - x))
     
     def numeric_score(self,col):
-        self.cont_score(self.df[col],col)
+        return self.cont_score(self.df[col],col)
     
-    def __dtseconds__(self,x):
+    def __dtseconds(self,x):
         if not x:
             return None
         try:
@@ -125,8 +124,8 @@ class UnusualRowScore():
             return None
 
     def date_score(self,col):
-        seconds = self.df[col].map(self.__dtseconds__)
-        self.cont_score(seconds,col)
+        seconds = self.df[col].map(self.__dtseconds)
+        return self.cont_score(seconds,col)
 
     def show(self,n=5):
         # Sort descending by the sum of the scores 
@@ -162,12 +161,11 @@ def header(text):
     print(bounds + textline + bounds)
 
 def megadescribe(df,n=5):
-    """Quickly see many statistics and pivots of your data"""
+    """Quickly see many statistics about and pivots of your data"""
     colclass = ColumnClassifier(df)
     strf = lambda x: "{0:.4f} %".format(x * 100)
     
     # Time to look at categorical variables
-    
     if not colclass.categoricals():
         print("No categorical variables.")
     else:
@@ -228,5 +226,5 @@ def megadescribe(df,n=5):
     # Time to look at unusual rows
     if not df.empty:
         header("Rows with high percentile values and/or rare categories")
-        unusualrows = UnusualRowScore(df,colclass)
+        unusualrows = UnusualRowScoring(df,colclass)
         unusualrows.show(n)
