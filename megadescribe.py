@@ -4,7 +4,7 @@ from IPython.display import display, HTML
 from dateutil.parser import parse
 from datetime import datetime as dt
 
-class ColumnClassifier():
+class column_classifier():
     """Classify the columns into dates, categorical variables, 
        and continuous variables, using reasonable guesses"""
     def __init__(self,df):
@@ -72,7 +72,7 @@ class ColumnClassifier():
                             exclude = self.__idsuffix + self.categoricals() +\
                                       self.__allnulls)
 
-class UnusualRowScoring():
+class surface_unusual_rows():
     """Give each row a score that sums up how 'unusual' its values are, where
        a value is considered unusual for a column of continuous variables when
        it has a high percentile, and is considered unusual for a column of 
@@ -131,17 +131,14 @@ class UnusualRowScoring():
         # Sort descending by the sum of the scores 
         sort_index = self.scores.sum(axis=1).sort_values(ascending=False).index
         to_display = self.df.loc[sort_index]
-        if this_is_a_notebook():
-            display(to_display.head(n))
-        else:
-            print(to_display.head(n))
+        context_specific_display(to_display.head(n))
 
-def this_is_a_notebook():
+def context_specific_display(to_display):
     try:
         get_ipython
-        return True
+        display(to_display)
     except:
-        False
+        print(to_display)
 
 def readable_numbers(x):
     toinsert = ''
@@ -162,7 +159,7 @@ def header(text):
 
 def megadescribe(df,n=5):
     """Quickly see many statistics about and pivots of your data"""
-    colclass = ColumnClassifier(df)
+    colclass = column_classifier(df)
     strf = lambda x: "{0:.4f} %".format(x * 100)
     
     # Time to look at categorical variables
@@ -177,10 +174,7 @@ def megadescribe(df,n=5):
             todisp = pd.value_counts(df[col].values).iloc[:5] / collen
             if not todisp.empty:
                 todispdf = pd.DataFrame(todisp.rename(str(col)).map(strf))
-                if this_is_a_notebook():
-                    display(todispdf)
-                else:
-                    print(todispdf)
+                context_specific_display(todispdf)
                 print('Top {:d} represent {:.1%} of rows.'.format(5,todisp.sum()))
                 if nmnull > 0:
                     print('{:.1%} of rows are null\n\n'.format(nmnull/collen))
@@ -217,14 +211,11 @@ def megadescribe(df,n=5):
         colorder = ['count','sum','mean','%null','min','10%','50%','90%','max']
         todisp = desc.applymap(readable_numbers).T[colorder]
         todisp = todisp.style.applymap(lambda x: 'text-align:right')
-        if this_is_a_notebook():
-            display(todisp)
-        else:
-            print(todisp)
+        context_specific_display(todisp)
         droppnulls = df[colclass.numerics()].dropna()
 
     # Time to look at unusual rows
     if not df.empty:
         header("Rows with high percentile values and/or rare categories")
-        unusualrows = UnusualRowScoring(df,colclass)
+        unusualrows = surface_unusual_rows(df,colclass)
         unusualrows.show(n)
