@@ -77,15 +77,15 @@ class surface_unusual_rows():
        a value is considered unusual for a column of continuous variables when
        it has a high percentile, and is considered unusual for a column of 
        categorical variables when it is rare."""
-    def __init__(self,df,colclass):
+    def __init__(self,df,dates=[],numerics=[],categoricals=[]):
         self.df = df
         self.scores = pd.DataFrame(index=df.index)
 
-        for col in colclass.dates():
+        for col in dates:
             self.scores[col] = self.date_score(col)
-        for col in colclass.numerics():
+        for col in numerics:
             self.scores[col] = self.numeric_score(col)
-        for col in colclass.categoricals():
+        for col in categoricals:
             self.scores[col] = self.categorical_score(col)
 
     def categorical_score(self,col):
@@ -217,5 +217,9 @@ def megadescribe(df,n=5):
     # Time to look at unusual rows
     if not df.empty:
         header("Rows with high percentile values and/or rare categories")
-        unusualrows = surface_unusual_rows(df,colclass)
+        unusualrows = surface_unusual_rows(df,
+                                           colclass.dates(),
+                                           colclass.numerics(),
+                                           colclass.categoricals()
+                                           )
         unusualrows.show(n)
