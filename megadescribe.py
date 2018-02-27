@@ -113,15 +113,18 @@ class surface_unusual_rows():
     def numeric_score(self,col):
         return self.cont_score(self.df[col],col)
     
-    def __dtseconds(self,x):
+    @staticmethod
+    def __dtseconds(x):
         if not x:
             return None
-        try:
-            if isinstance(x,str):
+        elif isinstance(x,str):
+            try:
                 x = parse(x)
-            return (x - dt.fromtimestamp(0)).total_seconds()
-        except:
+            except:
+                return None
+        elif not isinstance(x,dt):
             return None
+        return (x - dt.fromtimestamp(0)).total_seconds()
 
     def date_score(self,col):
         seconds = self.df[col].map(self.__dtseconds)
