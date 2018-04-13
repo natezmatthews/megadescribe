@@ -115,15 +115,24 @@ class surface_unusual_rows():
     
     @staticmethod
     def __dtseconds(x):
+        """If the argument can be interpreted as a date, return the number of
+        seconds between that date and the epoch. If it can't be interpreted as
+        a date, return None rather than erroring."""
+
+        # If the argument is none, it can't be intepreted as a date
         if not x:
             return None
+
+        # If it's a string, see if it can be converted to a date
         elif isinstance(x,str):
             try:
                 x = parse(x)
             except:
                 return None
+
         elif not isinstance(x,dt):
             return None
+
         return (x - dt.fromtimestamp(0)).total_seconds()
 
     def date_score(self,col):
